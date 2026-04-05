@@ -11,8 +11,10 @@ let state = {
     currentCategory: null, 
     dataCache: [],
     pointers: { food: 0, store: 0, music: 0 },
-    isLocating: false // Safety lock
+    isLocating: false // Safety lock to prevent multiple simultaneous GPS requests
 };
+
+const SG_CENTER = { lat: 1.3048, lng: 103.8318 }; // Orchard Road Fallback
 
 // --- SECURITY: CSV PARSING ---
 const secureParseCSV = (row) => {
@@ -36,10 +38,9 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
 }
 
-// --- GPS: FAIL-SAFE LOCATION ---
-const SG_CENTER = { lat: 1.3048, lng: 103.8318 };
-
+// --- GPS: UPDATED FOR INSTAGRAM STABILITY ---
 async function getLocation() {
+    // If we already have a location, return it. Prevents non-stop popups.
     if (state.userLoc) return state.userLoc;
     
     return new Promise((resolve) => {
@@ -49,14 +50,14 @@ async function getLocation() {
                 resolve(state.userLoc);
             },
             (err) => {
-                console.warn("Location error, using fallback:", err.message);
+                console.warn("Location skipped, using SG Center:", err.message);
                 state.userLoc = SG_CENTER; 
-                resolve(SG_CENTER);
+                resolve(SG_CENTER); 
             }, 
             { 
-                enableHighAccuracy: false, // Prevents Instagram from crashing
-                timeout: 10000,            // 10 seconds to allow for popups
-                maximumAge: Infinity 
+                enableHighAccuracy: false, // Instant response in Instagram/WebViews
+                timeout: 10000,            // 10s window for user to click "Allow"
+                maximumAge: 60000          // Use cached location if available
             } 
         );
     });
@@ -64,49 +65,31 @@ async function getLocation() {
 
 // --- ENGINE: CORE LOGIC ---
 async function handleAction(category) {
-    // 1. Prevent double-clicks from crashing the app
-    if (state.isLocating) {
-        console.log("Currently loading, please wait...");
-        return; 
-    }
+    // Stop overlapping requests if the user taps multiple buttons quickly
+    if (state.isLocating) return; 
 
     const resultsDiv = document.getElementById("results");
     const alertDiv = document.getElementById("distance-alert");
     
-    // SAFE DOM SELECTION: The `?` prevents crashes if the HTML ID doesn't exactly match
-    const clickedBtn = document.getElementById(`${category}Btn`);
-    
-    // UI Update Safely
+    // UI Update: Active Buttons
     document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-    if (clickedBtn) clickedBtn.classList.add('active');
+    document.getElementById(`${category}Btn`)?.classList.add('active');
     if (alertDiv) alertDiv.classList.add('hidden');
-
-    let originalText = clickedBtn ? clickedBtn.innerHTML : category;
-
-    // 2. Apply Loading Lock
-    if (!state.userLoc) {
-        state.isLocating = true;
-        if (clickedBtn) clickedBtn.innerHTML = `<span class="icon">⏳</span> Waiting...`;
-        if (resultsDiv) resultsDiv.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: white; padding: 40px;">📍 Getting location (check for prompt)...</div>`;
+    
+    // Only show skeletons if we are fetching new data
+    if (state.currentCategory !== category) {
+        resultsDiv.innerHTML = document.getElementById('skeleton-template').innerHTML.repeat(2);
     }
 
     try {
-        // 3. Await Location
+        state.isLocating = true;
+
+        // 1. Await location (With Instagram-optimized settings)
         const userCoords = await getLocation();
 
-        // 4. Fetch data if category changed
+        // 2. Fetch data if category changed
         if (state.currentCategory !== category) {
-            
-            // Safe skeleton loading
-            const skeleton = document.getElementById('skeleton-template');
-            if (resultsDiv && skeleton) {
-                resultsDiv.innerHTML = skeleton.innerHTML.repeat(2);
-            } else if (resultsDiv) {
-                resultsDiv.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: white;">Loading data...</div>`;
-            }
-
             state.currentCategory = category;
-            
             const res = await fetch(CONFIG.sheets[category]);
             if (!res.ok) throw new Error("Fetch failed");
             const text = await res.text();
@@ -115,13 +98,16 @@ async function handleAction(category) {
                 .slice(1) 
                 .map(row => row.trim())
                 .filter(row => row.length > 10) 
-                .map((row, idx) => ({ id: idx, cols: secureParseCSV(row) }))
+                .map((row, idx) => ({
+                    id: idx,
+                    cols: secureParseCSV(row)
+                }))
                 .filter(item => item.cols.length >= 5);
             
             state.pointers[category] = 0; 
         }
 
-        // 5. Calculate distances securely
+        // 3. Calculate distances and sort
         if (userCoords && category !== 'music') {
             state.dataCache.forEach(item => {
                 const lat = parseFloat(item.cols[2]);
@@ -135,22 +121,22 @@ async function handleAction(category) {
             }
         }
 
-        // 6. Pagination & Alert Check
+        // 4. Pointer System (Pagination)
         let currentIndex = state.pointers[category];
+
         if (currentIndex >= state.dataCache.length) {
-            if (resultsDiv) {
-                resultsDiv.innerHTML = `
-                    <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
-                        <p style="margin-bottom:15px; opacity:0.8; color:white;">✨ You've seen all current spots!</p>
-                        <button onclick="resetList('${category}')" class="category-btn active" style="margin: 0 auto; width: auto; padding: 10px 20px;">🔄 Back to Start</button>
-                    </div>`;
-            }
+            resultsDiv.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                    <p style="margin-bottom:15px; opacity:0.8; color:white;">✨ You've seen all current spots!</p>
+                    <button onclick="resetList('${category}')" class="category-btn active" style="margin: 0 auto; width: auto; padding: 10px 20px;">🔄 Back to Start</button>
+                </div>`;
             return; 
         }
 
         let selection = state.dataCache.slice(currentIndex, currentIndex + 2);
         state.pointers[category] += 2;
 
+        // 5. Boundary Alerts (2km Check)
         if (userCoords && category !== 'music' && alertDiv) {
             const hasAnyNear = state.dataCache.some(item => item.dist <= 2);
             const currentItemsAreFar = selection.every(item => item.dist > 2);
@@ -164,25 +150,17 @@ async function handleAction(category) {
             }
         }
 
-        // 7. Render
-        if (resultsDiv) {
-            resultsDiv.innerHTML = "";
-            selection.forEach(item => {
-                if (item) resultsDiv.appendChild(renderCard(item, category));
-            });
-        }
+        // 6. Render the Cards
+        resultsDiv.innerHTML = "";
+        selection.forEach(item => {
+            if (item) resultsDiv.appendChild(renderCard(item, category));
+        });
 
     } catch (err) {
-        console.error("Critical Application Error:", err);
-        if (resultsDiv) {
-            resultsDiv.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: white; padding: 20px;">❌ Error loading data. Please try again.</div>`;
-        }
+        console.error(err);
+        resultsDiv.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: white; padding: 20px;">❌ Error loading gems. Please try again.</div>`;
     } finally {
-        // 8. THE GUARANTEED UNLOCK: No matter what breaks, the app unlocks itself here.
         state.isLocating = false;
-        if (clickedBtn && clickedBtn.innerHTML.includes("Waiting")) {
-            clickedBtn.innerHTML = originalText;
-        }
     }
 }
 
@@ -257,6 +235,12 @@ function resetList(cat) {
 
 // --- INIT: AUTO-START ON LOAD ---
 window.addEventListener('DOMContentLoaded', () => {
-    // Restored the automatic load so the screen isn't blank on startup
+    const resultsDiv = document.getElementById("results");
+    resultsDiv.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 60px 20px;">
+            <p style="font-size: 1.2rem; margin-bottom: 10px;">📍 Finding nearby gems...</p>
+            <p style="font-size: 0.9rem; opacity: 0.7;">Please allow location access if prompted.</p>
+        </div>`;
+    
     handleAction('food');
 });
