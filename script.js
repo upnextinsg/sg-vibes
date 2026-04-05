@@ -10,7 +10,8 @@ let state = {
     userLoc: null, 
     currentCategory: null, 
     dataCache: [],
-    pointers: { food: 0, store: 0, music: 0 } 
+    pointers: { food: 0, store: 0, music: 0 },
+    isLocating: false // Safety lock
 };
 
 // --- SECURITY: CSV PARSING ---
@@ -35,18 +36,9 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
 }
 
-
-// Add isLocating to your state object at the top of your file
-let state = { 
-    userLoc: null, 
-    currentCategory: null, 
-    dataCache: [],
-    pointers: { food: 0, store: 0, music: 0 },
-    isLocating: false // NEW: Prevents app from moving forward until GPS is resolved
-};
+// --- GPS: FAIL-SAFE LOCATION ---
 const SG_CENTER = { lat: 1.3048, lng: 103.8318 };
 
-// --- GPS: THE ONCE-AND-FOR-ALL FIX ---
 async function getLocation() {
     if (state.userLoc) return state.userLoc;
     
@@ -57,14 +49,13 @@ async function getLocation() {
                 resolve(state.userLoc);
             },
             (err) => {
-                // If the user hits DENY, or if it genuinely times out, we use the fallback ONCE.
-                console.warn("Location denied/failed:", err.message);
+                console.warn("Location error, using fallback:", err.message);
                 state.userLoc = SG_CENTER; 
                 resolve(SG_CENTER);
             }, 
             { 
-                enableHighAccuracy: false, // Ensures fast response in WebViews
-                timeout: 30000,            // Give the user 30 full seconds to deal with the popup
+                enableHighAccuracy: false, // Prevents Instagram from crashing
+                timeout: 10000,            // 10 seconds to allow for popups
                 maximumAge: Infinity 
             } 
         );
@@ -73,39 +64,47 @@ async function getLocation() {
 
 // --- ENGINE: CORE LOGIC ---
 async function handleAction(category) {
-    // 1. Prevent overlapping clicks while waiting for the permission popup
-    if (state.isLocating) return; 
+    // 1. Prevent double-clicks from crashing the app
+    if (state.isLocating) {
+        console.log("Currently loading, please wait...");
+        return; 
+    }
 
     const resultsDiv = document.getElementById("results");
     const alertDiv = document.getElementById("distance-alert");
+    
+    // SAFE DOM SELECTION: The `?` prevents crashes if the HTML ID doesn't exactly match
     const clickedBtn = document.getElementById(`${category}Btn`);
     
-    // UI Update: Active Buttons
+    // UI Update Safely
     document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-    clickedBtn.classList.add('active');
-    alertDiv.classList.add('hidden');
+    if (clickedBtn) clickedBtn.classList.add('active');
+    if (alertDiv) alertDiv.classList.add('hidden');
 
-    // 2. Apply the "Loading Lock" visually if we don't have location yet
-    let originalText = clickedBtn.innerHTML;
+    let originalText = clickedBtn ? clickedBtn.innerHTML : category;
+
+    // 2. Apply Loading Lock
     if (!state.userLoc) {
         state.isLocating = true;
-        clickedBtn.innerHTML = `<span class="icon">⏳</span> Waiting...`;
-        resultsDiv.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: white; padding: 40px;">📍 Please click "Allow" on the location prompt...</div>`;
+        if (clickedBtn) clickedBtn.innerHTML = `<span class="icon">⏳</span> Waiting...`;
+        if (resultsDiv) resultsDiv.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: white; padding: 40px;">📍 Getting location (check for prompt)...</div>`;
     }
 
     try {
-        // 3. The app patiently waits here until the user clicks Allow/Deny.
+        // 3. Await Location
         const userCoords = await getLocation();
-
-        // Unlock the UI once we have an answer
-        if (state.isLocating) {
-            clickedBtn.innerHTML = originalText;
-            state.isLocating = false;
-        }
 
         // 4. Fetch data if category changed
         if (state.currentCategory !== category) {
-            resultsDiv.innerHTML = document.getElementById('skeleton-template').innerHTML.repeat(2);
+            
+            // Safe skeleton loading
+            const skeleton = document.getElementById('skeleton-template');
+            if (resultsDiv && skeleton) {
+                resultsDiv.innerHTML = skeleton.innerHTML.repeat(2);
+            } else if (resultsDiv) {
+                resultsDiv.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: white;">Loading data...</div>`;
+            }
+
             state.currentCategory = category;
             
             const res = await fetch(CONFIG.sheets[category]);
@@ -136,22 +135,23 @@ async function handleAction(category) {
             }
         }
 
-        // 6. Rendering Logic
+        // 6. Pagination & Alert Check
         let currentIndex = state.pointers[category];
         if (currentIndex >= state.dataCache.length) {
-            resultsDiv.innerHTML = `
-                <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
-                    <p style="margin-bottom:15px; opacity:0.8; color:white;">✨ You've seen all current spots!</p>
-                    <button onclick="resetList('${category}')" class="category-btn active" style="margin: 0 auto; width: auto; padding: 10px 20px;">🔄 Back to Start</button>
-                </div>`;
+            if (resultsDiv) {
+                resultsDiv.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                        <p style="margin-bottom:15px; opacity:0.8; color:white;">✨ You've seen all current spots!</p>
+                        <button onclick="resetList('${category}')" class="category-btn active" style="margin: 0 auto; width: auto; padding: 10px 20px;">🔄 Back to Start</button>
+                    </div>`;
+            }
             return; 
         }
 
         let selection = state.dataCache.slice(currentIndex, currentIndex + 2);
         state.pointers[category] += 2;
 
-        // Boundary Alerts
-        if (userCoords && category !== 'music') {
+        if (userCoords && category !== 'music' && alertDiv) {
             const hasAnyNear = state.dataCache.some(item => item.dist <= 2);
             const currentItemsAreFar = selection.every(item => item.dist > 2);
 
@@ -164,17 +164,25 @@ async function handleAction(category) {
             }
         }
 
-        // Draw Cards
-        resultsDiv.innerHTML = "";
-        selection.forEach(item => {
-            if (item) resultsDiv.appendChild(renderCard(item, category));
-        });
+        // 7. Render
+        if (resultsDiv) {
+            resultsDiv.innerHTML = "";
+            selection.forEach(item => {
+                if (item) resultsDiv.appendChild(renderCard(item, category));
+            });
+        }
 
     } catch (err) {
-        console.error(err);
+        console.error("Critical Application Error:", err);
+        if (resultsDiv) {
+            resultsDiv.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: white; padding: 20px;">❌ Error loading data. Please try again.</div>`;
+        }
+    } finally {
+        // 8. THE GUARANTEED UNLOCK: No matter what breaks, the app unlocks itself here.
         state.isLocating = false;
-        clickedBtn.innerHTML = originalText;
-        resultsDiv.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: white; padding: 20px;">❌ Error loading data. Please try again.</div>`;
+        if (clickedBtn && clickedBtn.innerHTML.includes("Waiting")) {
+            clickedBtn.innerHTML = originalText;
+        }
     }
 }
 
@@ -183,7 +191,6 @@ function renderCard(item, category) {
     const [name, type, lat, lng, desc, musicUrl, mapsUrl] = item.cols;
     const distValue = (item.dist && item.dist < 1000) ? `${item.dist.toFixed(1)}km away` : "";
     
-    // Placeholder Images
     const imagePool = {
         food: ["1555939594-58d7cb561ad1", "1540189549336-e6e99c3679fe", "1512621776951-a57141f2eefd"],
         store: ["1441986300917-64674bd600d8", "1472851294608-062f824d29cc"],
@@ -208,12 +215,10 @@ function renderCard(item, category) {
             <div class="card-footer"></div>
         </div>`;
 
-    // Secure Text Injection
-    card.querySelector('h3').textContent = name;
-    card.querySelector('p').textContent = desc;
-    card.querySelector('.category-tag').textContent = type;
+    card.querySelector('h3').textContent = name || "Unknown";
+    card.querySelector('p').textContent = desc || "No description available.";
+    card.querySelector('.category-tag').textContent = type || category;
     
-    // Distance Tag
     const distTag = card.querySelector('.dist-tag');
     if (distValue) {
         distTag.textContent = distValue;
@@ -221,7 +226,6 @@ function renderCard(item, category) {
         distTag.remove();
     }
     
-    // External Links (Trust & Security)
     const footer = card.querySelector('.card-footer');
     if (mapsUrl && category !== 'music') {
         const link = document.createElement('a');
@@ -253,17 +257,6 @@ function resetList(cat) {
 
 // --- INIT: AUTO-START ON LOAD ---
 window.addEventListener('DOMContentLoaded', () => {
-    const resultsDiv = document.getElementById("results");
-    
-    // Do NOT call handleAction('food') here automatically anymore.
-    // Instead, prompt the user to make the first move.
-    resultsDiv.innerHTML = `
-        <div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 60px 20px;">
-            <p style="font-size: 1.2rem; margin-bottom: 10px;">👋 Welcome!</p>
-            <p style="font-size: 0.9rem; opacity: 0.8;">Tap a category above to find spots near you.</p>
-        </div>`;
-});
-    
-    // Automatically fetch and load the food category
+    // Restored the automatic load so the screen isn't blank on startup
     handleAction('food');
 });
