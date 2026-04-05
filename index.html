@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>🇸🇬 SG Vibes | Discover Local</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https:; connect-src 'self' https:; style-src 'self' 'unsafe-inline' https: fonts.googleapis.com; font-src 'self' https: fonts.gstatic.com; img-src 'self' data: https://images.unsplash.com https://upload.wikimedia.org https://*.unsplash.com;">
+</head>
+<body>
+    <div class="background-animate" aria-hidden="true"></div>
+
+    <div class="container">
+        <header>
+            <div class="logo-wrapper">
+                <h1>SG Vibes</h1>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/4/48/Flag_of_Singapore.svg" alt="Singapore Flag" class="main-flag">
+            </div>
+            <p class="subtitle">By Singapore, for you</p>
+            
+            <div class="header-disclaimer">
+                <span>ℹ️ Images for illustrative purposes only.
+                    <p>Instructions: Recommends 2 options each time you hit the category button. Keep pressing for more options.</p>
+                    <p>App takes time to load while calculating location. Open in Maps/Spotify for more!</p>
+                    <p>Check stores' opening hours before visiting.</p>
+                </span>
+                
+            </div>
+        </header>
+
+        <nav class="button-group">
+            <button id="foodBtn" class="category-btn" onclick="handleAction('food')">
+                <span class="icon">🍜</span> Food
+            </button>
+            <button id="storeBtn" class="category-btn" onclick="handleAction('store')">
+                <span class="icon">🏪</span> Stores
+            </button>
+            <button id="musicBtn" class="category-btn" onclick="handleAction('music')">
+                <span class="icon">🎵</span> Music
+            </button>
+        </nav>
+
+        <div id="distance-alert" class="hidden alert-warning"></div>
+
+        <main id="results" class="results-grid">
+            </main>
+
+        <footer>
+            <p>© 2026 SG Vibes • Discovering the Red Dot</p>
+            <div class="footer-legal">
+                <p>Visuals sourced from <a href="https://unsplash.com" target="_blank">Unsplash</a>. Business data is curated for informational use; please verify status locally.</p>
+            </div>
+        </footer>
+    </div>
+
+    <template id="skeleton-template">
+        <div class="card skeleton">
+            <div class="img-container skeleton-pulse"></div>
+            <div class="card-content">
+                <div class="skeleton-line skeleton-pulse" style="width: 60%"></div>
+                <div class="skeleton-line skeleton-pulse" style="width: 90%"></div>
+                <div class="skeleton-btn skeleton-pulse"></div>
+            </div>
+        </div>
+    </template>
+
+    <script src="script.js"></script>
+</body>
+</html>
