@@ -45,25 +45,25 @@ async function getLocation() {
     const getCoords = (highAcc) => {
         return new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
-                enableHighAccuracy: highAcc,
-                timeout: 5000, 
-                maximumAge: 0
+                enableHighAccuracy: highAcc, // Now forces true on the first try
+                timeout: 10000,              // Increased to 10 seconds for slower phones
+                maximumAge: 60000            // Allows using a location from the last 60 seconds
             });
         });
     };
 
     try {
-        // Attempt 1: Standard (Fast)
-        const pos = await getCoords(false);
+        // Attempt 1: High Accuracy (Real GPS)
+        const pos = await getCoords(true);
         state.userLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
     } catch (err) {
-        console.warn("First GPS attempt failed, retrying once...");
+        console.warn("High accuracy failed, trying standard...");
         try {
-            // Attempt 2: Instagram often needs a second "poke" to wake up
+            // Attempt 2: Standard Accuracy (Cell/IP) - Good for Instagram fallback
             const pos = await getCoords(false);
             state.userLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         } catch (finalErr) {
-            console.error("GPS totally failed. Using Orchard Road.");
+            console.error("GPS totally failed. Using SG Center.");
             state.userLoc = SG_CENTER;
         }
     }
@@ -72,18 +72,16 @@ async function getLocation() {
 
 // --- ENGINE: CORE LOGIC ---
 async function handleAction(category) {
-    // Stop overlapping requests if the user taps multiple buttons quickly
     if (state.isLocating) return; 
 
     const resultsDiv = document.getElementById("results");
     const alertDiv = document.getElementById("distance-alert");
     
-    // UI Update: Active Buttons
+    // UI Update
     document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(`${category}Btn`)?.classList.add('active');
     if (alertDiv) alertDiv.classList.add('hidden');
     
-    // Only show skeletons if we are fetching new data
     if (state.currentCategory !== category) {
         resultsDiv.innerHTML = document.getElementById('skeleton-template').innerHTML.repeat(2);
     }
@@ -91,16 +89,26 @@ async function handleAction(category) {
     try {
         state.isLocating = true;
 
-        // 1. Await location (With Instagram-optimized settings)
-        const userCoords = await getLocation();
+        // SPEED OPTIMIZATION: Start getting location and data at the exact same time
+        const locationPromise = getLocation();
+        let dataPromise = null;
 
-        // 2. Fetch data if category changed
         if (state.currentCategory !== category) {
+            dataPromise = fetch(CONFIG.sheets[category]).then(res => {
+                if (!res.ok) throw new Error("Fetch failed");
+                return res.text();
+            });
+        }
+
+        // Wait for both tasks to finish
+        const [userCoords, text] = await Promise.all([
+            locationPromise,
+            dataPromise ? dataPromise : Promise.resolve(null)
+        ]);
+
+        // Process data if we downloaded new data
+        if (text) {
             state.currentCategory = category;
-            const res = await fetch(CONFIG.sheets[category]);
-            if (!res.ok) throw new Error("Fetch failed");
-            const text = await res.text();
-            
             state.dataCache = text.split("\n")
                 .slice(1) 
                 .map(row => row.trim())
@@ -143,7 +151,7 @@ async function handleAction(category) {
         let selection = state.dataCache.slice(currentIndex, currentIndex + 2);
         state.pointers[category] += 2;
 
-        // 5. Boundary Alerts (2km Check)
+        // 5. Boundary Alerts
         if (userCoords && category !== 'music' && alertDiv) {
             const hasAnyNear = state.dataCache.some(item => item.dist <= 2);
             const currentItemsAreFar = selection.every(item => item.dist > 2);
@@ -242,6 +250,26 @@ function resetList(cat) {
 
 // --- INIT: AUTO-START ON LOAD ---
 window.addEventListener('DOMContentLoaded', () => {
+    // 1. Show Tutorial if first time
+    if (!localStorage.getItem('sgVibesTutorialSeen')) {
+        const overlay = document.getElementById('tutorial-overlay');
+        const closeBtn = document.getElementById('close-tutorial');
+        
+        overlay.classList.remove('hidden');
+        
+        // Close when clicking the button or anywhere on the background
+        const closeTutorial = () => {
+            overlay.classList.add('hidden');
+            localStorage.setItem('sgVibesTutorialSeen', 'true');
+        };
+        
+        closeBtn.addEventListener('click', closeTutorial);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeTutorial();
+        });
+    }
+
+    // 2. Start initial load
     const resultsDiv = document.getElementById("results");
     resultsDiv.innerHTML = `
         <div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 60px 20px;">
