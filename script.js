@@ -111,7 +111,7 @@ function fallbackLocation(resolve, reason) {
         `;
 
         if (isInstagramBrowser()) {
-            message += `👉 For accurate results, tap <b>•••</b> → <b>Open in Browser</b>`;
+            message += `👉 For accurate results, tap <b>•••/⋮</b> → <b>Open in your Browser</b>`;
         } else {
             message += `👉 Please enable location permissions`;
         }
