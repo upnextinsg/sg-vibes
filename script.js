@@ -113,7 +113,7 @@ function fallbackLocation(resolve, reason) {
         if (isInstagramBrowser()) {
             message += `👉 For accurate results, tap <b>•••/⋮</b> → <b>Open in your Browser</b>`;
         } else {
-            message += `👉 Please enable location permissions`;
+            message += `👉 Please enable location permissions and refresh`;
         }
 
         alertBox.innerHTML = message;
@@ -143,7 +143,7 @@ async function handleAction(category) {
             alertBox.classList.remove("hidden");
             alertBox.innerHTML = `
                 ⚠️ Instagram may show inaccurate location.<br>
-                Tap <b>•••</b> → <b>Open in Browser</b> for best results.
+                Tap <b>•••/⋮</b> → <b>Open in Browser</b> for best results.
             `;
         }
     }
