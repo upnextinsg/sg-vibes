@@ -211,7 +211,7 @@ async function handleAction(category, shouldScroll = true) {
         state.isLocating = false;
     }
 }
-
+}
 
 // -----------------------------
 // CARD RENDER
