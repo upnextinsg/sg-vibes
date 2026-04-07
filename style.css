@@ -372,15 +372,22 @@ footer p {
     .card-content h3 { font-size: 0.85rem; margin: 2px 0; }
     
     /* Keep cards uniform */
-    .card-content p { 
-        font-size: 0.7rem; 
+   .card-content p { 
+        font-size: 0.75rem; 
+        line-height: 1.4;
         margin-bottom: 8px; 
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+        
+        /* THE FIX: Replaces the "..." logic */
+        display: block;        
+        overflow: visible;     
+        -webkit-line-clamp: unset; 
     }
-
+    .card { 
+        display: flex;
+        flex-direction: column;
+        height: 100%; 
+        border-radius: 16px;
+    }
     .btn-link { font-size: 0.65rem; padding: 6px 2px; border-radius: 8px; }
     .dist-tag { font-size: 0.55rem; padding: 2px 6px; top: 5px; right: 5px; }
 }
