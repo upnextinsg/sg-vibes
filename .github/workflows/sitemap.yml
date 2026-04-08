@@ -5,7 +5,10 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-# This tells the runner to use Node 24 even if an action is lagging behind
+# This is the "Magic Fix" for Error 128
+permissions:
+  contents: write
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -14,8 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout the repo
-      # Updated from v4 to v5 to support Node 24
-      uses: actions/checkout@v5 
+      uses: actions/checkout@v4 # v4 is stable, v5 is also acceptable
       with:
         fetch-depth: 0 
 
@@ -27,10 +29,13 @@ jobs:
         
     - name: Commit and push
       run: |
-        if [[ `git status --porcelain sitemap.xml` ]]; then
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
+        # Check if sitemap.xml actually changed
+        if [[ -n "$(git status --porcelain sitemap.xml)" ]]; then
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add sitemap.xml
-          git commit -m "Automated sitemap update (Node 24)"
+          git commit -m "Automated sitemap update"
           git push
+        else
+          echo "No changes to sitemap.xml. Skipping push."
         fi
