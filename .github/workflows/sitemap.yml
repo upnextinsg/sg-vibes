@@ -25,7 +25,7 @@ jobs:
       id: sitemap
       uses: cicirello/generate-sitemap@v1
       with:
-        base-url-path: https://upnextsg.github.io/sg-vibes/
+        base-url-path: https://upnextinsg.github.io/sg-vibes/
         
     - name: Commit and push
       run: |
