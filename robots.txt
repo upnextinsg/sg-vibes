@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://upnextsg.github.io/sg-vibes/sitemap.xml
+Sitemap: https://upnextinsg.github.io/sg-vibes/sitemap.xml
