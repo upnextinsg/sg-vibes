@@ -115,8 +115,8 @@ function fallbackLocation(resolve, reason) {
     const alertBox = document.getElementById("distance-alert");
     if (alertBox) {
         alertBox.classList.remove("hidden");
-        let message = `📍 Showing results across Singapore. For better accuracy, turn on location.`;
-        if (isInstagramBrowser()) message += `<br>👉 Tap <b>•••</b> → <b>Open in Browser</b>`;
+        let message = `📍 Showing results across Singapore. For better accuracy, turn on location and refresh.`;
+        if (isInstagramBrowser()) message += `<br>👉 Tap <b>•••/⋮</b> → <b>Open in Browser</b>`;
         alertBox.innerHTML = message;
     }
     state.userLoc = SG_CENTER;
