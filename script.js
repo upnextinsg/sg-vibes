@@ -206,9 +206,9 @@ function renderCard(item, category) {
     
     // Original IDs for your preference
     const imgMap = {
-        food: "1504674900263-8512e9558303",
-        store: "1441986300917-64674bd600d8",
-        music: "1511671782779-c97d3d27a1d4"
+        food: ["1555939594-58d7cb561ad1", "1540189549336-e6e99c3679fe", "1512621776951-a57141f2eefd"],
+        store: ["1441986300917-64674bd600d8", "1472851294608-062f824d29cc"],
+        music: ["1511671782779-c97d3d27a1d4", "1470225620780-dba8ba36b745"]
     };
     const imgId = imgMap[category] || imgMap.food;
     const imgSrc = `https://images.unsplash.com/photo-${imgId}?auto=format&fit=crop&w=600&q=60`;
