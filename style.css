@@ -150,20 +150,41 @@ header {
 .alert-warning {
     position: -webkit-sticky;
     position: sticky;
-    top: 95px; /* Sits right under the glass button-group */
+    top: 95px; /* Aligned under your sticky buttons */
     z-index: 2000;
-    background: #ff3b30 !important; /* Singapore Red */
-    color: white !important;
-    border: 2px solid white !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    animation: alertShake 0.5s ease-in-out infinite alternate !important;
+    
+    /* Matching your Glassmorphism theme */
+    background: rgba(255, 255, 255, 0.08) !important; 
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    
+    /* Refined Border & Shadow */
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    
+    /* Typography */
+    color: #ffffff !important;
+    padding: 16px;
+    border-radius: 20px;
+    text-align: center;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    font-weight: 500;
+    margin: 15px auto;
+    width: 92%;
+    
+    /* Clean state - No bobbling/animations */
+    animation: none !important;
+    transition: all 0.3s ease;
 }
 
-@keyframes alertShake {
-    from { transform: scale(1) rotate(-0.5deg); }
-    to { transform: scale(1.02) rotate(0.5deg); }
+/* Make the specific 'Open in Browser' text pop without being 'ugly' */
+.alert-warning b {
+    color: var(--accent); /* Uses your #ff4757 for the call-to-action only */
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
-.alert-warning b { color: #d63031; text-decoration: underline; }
 
 /* Global Hidden State */
 .hidden { 
