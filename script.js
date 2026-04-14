@@ -21,14 +21,11 @@ const SG_CENTER = { lat: 1.3048, lng: 103.8318 };
 
 function toggleLoader(show) {
     const loader = document.getElementById('loading-overlay');
-    if (show) {
-        loader.classList.remove('hidden');
-    } else {
-        loader.classList.add('hidden');
+    if (loader) {
+        show ? loader.classList.remove('hidden') : loader.classList.add('hidden');
     }
 }
 
-// Updated Hero Transition Logic (Aesthetic & Duration Fix)
 function heroRedirect(url) {
     const overlay = document.createElement('div');
     overlay.className = 'hero-transition';
@@ -38,7 +35,6 @@ function heroRedirect(url) {
     `;
     document.body.appendChild(overlay);
 
-    // 2-second delay for impact before opening link
     setTimeout(() => {
         window.open(url, '_blank');
         overlay.remove();
@@ -105,6 +101,8 @@ async function getLocation() {
             (pos) => {
                 state.userLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                 state.locationStatus = 'resolved';
+                // Hide alert if location is now found
+                document.getElementById("distance-alert")?.classList.add("hidden");
                 resolve(state.userLoc);
             },
             (error) => fallbackLocation(resolve, error.message),
@@ -155,7 +153,6 @@ async function handleAction(category) {
             state.pointers[category] = 0; 
         }
 
-        // Distance sorting for non-music categories
         if (category !== 'music') {
             state.dataCache.forEach(item => {
                 const lat = parseFloat(item.cols[2]);
@@ -169,9 +166,8 @@ async function handleAction(category) {
 
         let selection = state.dataCache.slice(state.pointers[category], state.pointers[category] + 2);
         
-        // Handle end of list or single result cases
         if (selection.length === 1 && state.dataCache.length > 1) {
-             selection.push(state.dataCache[0]); // Fill slot if only one left
+             selection.push(state.dataCache[0]); 
         }
 
         state.pointers[category] += 2;
@@ -186,14 +182,20 @@ async function handleAction(category) {
         } else {
             resultsDiv.innerHTML = "";
             selection.forEach(item => resultsDiv.appendChild(renderCard(item, category)));
-            window.scrollTo({ top: resultsDiv.offsetTop - 120, behavior: 'smooth' });
+            
+            // Logic Fix: Ensure error visibility isn't scrolled past
+            const alertBox = document.getElementById("distance-alert");
+            if (alertBox && !alertBox.classList.contains("hidden")) {
+                window.scrollTo({ top: alertBox.offsetTop - 100, behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: resultsDiv.offsetTop - 120, behavior: 'smooth' });
+            }
         }
-
-    } catch (e) {
-        console.error("Selection Error:", e);
+    } catch (err) {
+        console.error("Action Error:", err);
     } finally {
         state.isLocating = false;
-        setTimeout(() => toggleLoader(false), 600);
+        toggleLoader(false);
     }
 }
 
@@ -202,36 +204,41 @@ async function handleAction(category) {
 function renderCard(item, category) {
     const [name, type, lat, lng, desc, musicUrl, mapsUrl] = item.cols;
     
-    // Define images based on category to fix the imgId error
+    // Original IDs for your preference
     const imgMap = {
         food: "1504674900263-8512e9558303",
         store: "1441986300917-64674bd600d8",
         music: "1511671782779-c97d3d27a1d4"
     };
-    const imgId = imgMap[category] || "1504674900263-8512e9558303";
+    const imgId = imgMap[category] || imgMap.food;
+    const imgSrc = `https://images.unsplash.com/photo-${imgId}?auto=format&fit=crop&w=600&q=60`;
 
     const card = document.createElement("div");
     card.className = "card";
     
-    // Distance display
-    const distText = item.dist ? `${item.dist.toFixed(1)}km away` : "Discover local";
+    const distText = item.dist ? `${item.dist.toFixed(1)}km` : "Local Spot";
 
     card.innerHTML = `
         <div class="img-container">
-            <img src="https://images.unsplash.com/photo-${imgId}?auto=format&fit=crop&w=600&q=60" class="card-img" alt="${name}">
+            <img src="${imgSrc}" 
+                 class="card-img" 
+                 alt="${name}" 
+                 onerror="this.src='https://images.unsplash.com/photo-1525596662741-e94ff9f26de1?w=600'">
             <span class="dist-tag">${distText}</span>
         </div>
         <div class="card-content">
-            <span class="category-tag">${type || category}</span>
-            <h3>${name || "Local Spot"}</h3>
-            <p>${desc || "Tap below for details"}</p>
+            <div>
+                <span class="category-tag">${type || category}</span>
+                <h3>${name || "Local Spot"}</h3>
+                <p>${desc || "Tap below for details"}</p>
+            </div>
             <div class="card-footer" style="display:flex; gap:8px;"></div>
         </div>`;
 
     const footer = card.querySelector('.card-footer');
     const targetUrl = (category === 'music' && musicUrl) ? musicUrl : (mapsUrl || "#");
     
-    // Primary Action Button
+    // Directions / Spotify
     const mainBtn = document.createElement('button');
     mainBtn.className = "btn-link";
     mainBtn.style.flex = "2";
@@ -240,10 +247,10 @@ function renderCard(item, category) {
     mainBtn.style.padding = "12px";
     mainBtn.style.borderRadius = "12px";
     mainBtn.style.fontWeight = "700";
-    mainBtn.textContent = (category === 'music') ? "🎵 Open Spotify" : "📍 Open Google Maps";
+    mainBtn.textContent = (category === 'music') ? "🎵 Open Spotify" : "📍 Directions";
     mainBtn.onclick = () => heroRedirect(targetUrl);
     
-    // Share Button
+    // Share
     const shareBtn = document.createElement('button');
     shareBtn.className = "btn-link btn-share-secondary";
     shareBtn.style.flex = "1";
@@ -284,11 +291,10 @@ window.addEventListener('DOMContentLoaded', () => {
     const overlay = document.getElementById('tutorial-overlay');
     const closeBtn = document.getElementById('close-tutorial');
     
-    // Show tutorial on first load
-    overlay.classList.remove('hidden');
+    if (overlay) overlay.classList.remove('hidden');
 
-    closeBtn.addEventListener('click', () => {
+    closeBtn?.addEventListener('click', () => {
         overlay.classList.add('hidden');
-        handleAction('food'); // Initial trigger
+        handleAction('food'); 
     });
 });
