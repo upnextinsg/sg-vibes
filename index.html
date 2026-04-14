@@ -16,6 +16,13 @@
 <body>
     <div class="background-animate" aria-hidden="true"></div>
 
+    <div id="loading-overlay" class="loader-container hidden">
+        <div class="loader-content">
+            <div class="pulse-ring"></div>
+            <p>Locating the best SG spots near you...</p>
+        </div>
+    </div>
+    
     <div class="container">
         <header>
             <div class="logo-wrapper">
@@ -82,6 +89,11 @@
         </div>
     </div>
 
+    <div id="hero-toast" class="toast-notification hidden">
+        <span class="toast-icon">🔥</span>
+        <span class="toast-text">Good choice! You're supporting a local SG business today.</span>
+    </div>
+    
     <script src="script.js"></script>
 </body>
 </html>
