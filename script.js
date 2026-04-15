@@ -211,13 +211,20 @@ function renderCard(item, category) {
         store: ["1441986300917-64674bd600d8", "1472851294608-062f824d29cc"],
         music: ["1511671782779-c97d3d27a1d4", "1470225620780-dba8ba36b745"]
     };
-    const imgId = imgMap[category] || imgMap.food;
-    const imgSrc = `https://images.unsplash.com/photo-${imgId}?auto=format&fit=crop&w=600&q=60`;
+    const images = imgMap[category] || imgMap.food;
 
+    // Cycle using item id (ensures variation)
+    const imgId = images[item.id % images.length];
+    
+    const imgSrc = `https://images.unsplash.com/photo-${imgId}?auto=format&fit=crop&w=600&q=60`;
     const card = document.createElement("div");
     card.className = "card";
     
-    const distText = item.dist ? `${item.dist.toFixed(1)}km` : "Local Spot";
+    const distText = category === 'music'
+    ? "🎵 Music Pick"
+    : item.dist
+        ? `${item.dist.toFixed(1)}km`
+        : "Nearby";
 
     card.innerHTML = `
         <div class="img-container">
@@ -248,7 +255,7 @@ function renderCard(item, category) {
     mainBtn.style.padding = "12px";
     mainBtn.style.borderRadius = "12px";
     mainBtn.style.fontWeight = "700";
-    mainBtn.textContent = (category === 'music') ? "🎵 Open Spotify" : "📍 Directions";
+    mainBtn.textContent = (category === 'music') ? "🎵 Open Spotify" : "📍 Open in Google Maps";
     mainBtn.onclick = () => heroRedirect(targetUrl);
     
     // Share
@@ -275,7 +282,7 @@ function resetList(cat) {
 function shareApp() {
     const appData = {
         title: 'SG Vibes',
-        text: 'Discover the best local food, shops, and music in Singapore! 🇸🇬',
+        text: 'Discover the best local food, shops, and music in Singapore!',
         url: 'https://upnextinsg.github.io/sg-vibes/'
     };
     if (navigator.share) {
