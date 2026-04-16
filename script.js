@@ -48,7 +48,7 @@ function showHeroOverlay() {
     setTimeout(() => {
         overlay.classList.add('fade-out');
         setTimeout(() => overlay.remove(), 800);
-    }, 3500);
+    }, 4800);
 }
 
 async function shareSpot(name, specificUrl) {
@@ -267,19 +267,19 @@ function renderCard(item, category) {
     mainBtn.textContent = (activeCat === 'music') ? "🎵 Open Spotify" : "📍 Open Google Maps";
     
     mainBtn.onclick = () => {
-    if (targetUrl && targetUrl !== "#") {
-        // 1. Show the Hero UI immediately
-        showHeroOverlay();
-        
-        // 2. DELAY the tab opening. 
-        // 1 second (1000ms) is the "Sweet Spot":
-        // Long enough for the user to read "You're a Hero", 
-        // but short enough that the browser doesn't block the popup.
-        setTimeout(() => {
-            window.open(targetUrl, '_blank');
-        }, 1000); 
-    } else {
+    if (!targetUrl || targetUrl === "#") {
         alert("Link unavailable.");
+        return;
+    }
+
+    showHeroOverlay();
+
+    // 🔥 Open immediately (safe for iOS)
+    const newTab = window.open(targetUrl, '_blank');
+
+    // Fallback if blocked
+    if (!newTab) {
+        window.location.href = targetUrl;
     }
 };
     
