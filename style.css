@@ -270,13 +270,10 @@ header {
 }
 
 .card-content p { 
-    font-size: 0.7rem !important; 
+    font-size: 0.75rem !important; 
     margin-bottom: 8px !important;
-
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    line-height: 1.4;
+    /* Removed the webkit-box and overflow hidden properties */
 }
 
 .card-footer {
@@ -431,14 +428,10 @@ footer p {
     }
     
     .card-content p { 
-        font-size: 0.7rem !important; 
+        font-size: 0.75rem !important; 
         margin-bottom: 8px !important;
-    
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-}
+        line-height: 1.4;
+    }
 
     .card-footer { 
         padding-top: 5px !important; 
