@@ -77,15 +77,14 @@ header {
 }
 
 .header-instructions {
-    margin: 20px auto 15px;
+    margin: 10px auto;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 16px;
+    padding: 10px 15px;
     width: 100%;
-    max-width: 600px; /* Maximizes horizontal space */
+    max-width: 600px;
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
 }
 
 .instruction-title {
@@ -97,14 +96,12 @@ header {
 
 .instruction-steps {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    font-size: 0.85rem;
+    flex-direction: row; /* Horizontal layout */
+    justify-content: space-around;
+    flex-wrap: wrap; /* Wraps on small screens but stays slim */
+    gap: 10px;
+    font-size: 0.75rem;
     opacity: 0.9;
-    text-align: left;
-    max-width: fit-content;
-    margin: 0 auto;
 }
 
 .header-disclaimer {
