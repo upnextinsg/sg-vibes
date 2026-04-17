@@ -123,7 +123,7 @@ header {
     
     /* Stick to top */
     position: -webkit-sticky;
-    position: sticky; 
+    position: relative;
     top: 10px; 
     z-index: 1000;
     
@@ -137,6 +137,13 @@ header {
     /* Subtle border to define the shape against the aurora */
     border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.button-group.sticky-active {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 10px;
+    z-index: 1000;
 }
 
 .category-btn {
