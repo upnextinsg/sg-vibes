@@ -37,7 +37,7 @@ function showHeroOverlay() {
         <div class="hero-card">
             <div class="hero-icon">🇸🇬</div>
             <h2>You're a Hero!</h2>
-            <p>Your support helps our local food, shops, and musicians thrive.</p>
+            <p>Opening now… thanks for supporting local</p>
             <div class="hero-loader"></div>
         </div>
     `;
@@ -291,7 +291,7 @@ function renderCard(item, category) {
     // ✅ Then navigate in SAME TAB
     setTimeout(() => {
         window.location.href = targetUrl;
-    }, 1200); // 1.2s = visible but not annoying
+    }, 1400); // 1.2s = visible but not annoying
 };
     
     const shareBtn = document.createElement('button');
