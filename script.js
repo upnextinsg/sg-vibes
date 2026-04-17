@@ -14,7 +14,8 @@ let state = {
     isLocating: false,
     locationStatus: 'idle',
     appPhase: 'BOOT',
-    hasUserInteracted: false
+    hasUserInteracted: false,
+    hasInitialScrollDone: false,
 };
 
 const SG_CENTER = { lat: 1.3048, lng: 103.8318 };
@@ -225,13 +226,16 @@ if (buttonGroup && !buttonGroup.classList.contains('sticky-active')) {
             resultsDiv.innerHTML = "";
             selection.forEach(item => resultsDiv.appendChild(renderCard(item, category)));
             
-            // Logic Fix: Ensure error visibility isn't scrolled past
+            // Only scroll AFTER user has actually started interacting (post-tutorial UX)
+        if (state.hasInitialScrollDone) {
             const alertBox = document.getElementById("distance-alert");
+        
             if (alertBox && !alertBox.classList.contains("hidden")) {
                 window.scrollTo({ top: alertBox.offsetTop - 100, behavior: 'smooth' });
             } else {
                 window.scrollTo({ top: resultsDiv.offsetTop - 120, behavior: 'smooth' });
             }
+        }
         }
     } catch (err) {
         console.error("Action Error:", err);
@@ -353,7 +357,9 @@ window.addEventListener('DOMContentLoaded', () => {
     function startApp() {
         if (hasStarted) return;
         hasStarted = true;
+        requestAnimationFrame(() => {
         handleAction('food');
+});
     }
 
     if (overlay) {
@@ -362,6 +368,7 @@ window.addEventListener('DOMContentLoaded', () => {
         closeBtn?.addEventListener('click', () => {
         overlay.classList.add('hidden');
         state.appPhase = 'READY';
+        state.hasInitialScrollDone = true;
         startApp();
     });
 
