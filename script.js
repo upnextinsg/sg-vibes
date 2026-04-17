@@ -12,7 +12,8 @@ let state = {
     dataCache: [],
     pointers: { food: 0, store: 0, music: 0 },
     isLocating: false,
-    locationStatus: 'idle' 
+    locationStatus: 'idle',
+    appPhase: 'BOOT'
 };
 
 const SG_CENTER = { lat: 1.3048, lng: 103.8318 };
@@ -349,12 +350,16 @@ window.addEventListener('DOMContentLoaded', () => {
         overlay.classList.remove('hidden');
 
         closeBtn?.addEventListener('click', () => {
-            overlay.classList.add('hidden');
-            startApp();
-        });
+        overlay.classList.add('hidden');
+        state.appPhase = 'READY';
+        startApp();
+    });
 
         // 🔥 FAILSAFE: if anything breaks, auto-start after 1.5s
-        setTimeout(startApp, 1500);
+        setTimeout(() => {
+            state.appPhase = 'READY';
+            startApp();
+        }, 1500);
     } else {
         startApp();
     }
