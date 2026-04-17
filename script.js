@@ -13,7 +13,8 @@ let state = {
     pointers: { food: 0, store: 0, music: 0 },
     isLocating: false,
     locationStatus: 'idle',
-    appPhase: 'BOOT'
+    appPhase: 'BOOT',
+    hasUserInteracted: false
 };
 
 const SG_CENTER = { lat: 1.3048, lng: 103.8318 };
@@ -151,9 +152,26 @@ async function handleAction(category) {
     const resultsDiv = document.getElementById("results");
     const buttonGroup = document.querySelector('.button-group');
 
-    if (buttonGroup && !buttonGroup.classList.contains('sticky-active')) {
-        buttonGroup.classList.add('sticky-active');
+if (buttonGroup && !buttonGroup.classList.contains('sticky-active')) {
+    buttonGroup.classList.add('sticky-active');
+
+    // ONLY scroll AFTER first user interaction
+    if (!state.hasUserInteracted) {
+        state.hasUserInteracted = true;
+
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                const yOffset = -10;
+                const y = buttonGroup.getBoundingClientRect().top + window.pageYOffset + yOffset;
+
+                window.scrollTo({
+                    top: y,
+                    behavior: 'smooth'
+                });
+            }, 80); // small delay prevents auto-scroll glitch
+        });
     }
+}
     document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(`${category}Btn`)?.classList.add('active');
 
