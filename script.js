@@ -107,6 +107,16 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
 }
 
+function scrollToResults() {
+    const resultsDiv = document.getElementById("results");
+    if (!resultsDiv) return;
+
+    window.scrollTo({
+        top: resultsDiv.offsetTop - 120,
+        behavior: 'smooth'
+    });
+}
+
 async function getLocation() {
     if (state.locationStatus === 'resolved') return state.userLoc || SG_CENTER;
     state.locationStatus = 'requesting';
@@ -153,26 +163,6 @@ async function handleAction(category) {
     const resultsDiv = document.getElementById("results");
     const buttonGroup = document.querySelector('.button-group');
 
-if (buttonGroup && !buttonGroup.classList.contains('sticky-active')) {
-    buttonGroup.classList.add('sticky-active');
-
-    // ONLY scroll AFTER first user interaction
-    if (!state.hasUserInteracted) {
-        state.hasUserInteracted = true;
-
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                const yOffset = -10;
-                const y = buttonGroup.getBoundingClientRect().top + window.pageYOffset + yOffset;
-
-                window.scrollTo({
-                    top: y,
-                    behavior: 'smooth'
-                });
-            }, 80); // small delay prevents auto-scroll glitch
-        });
-    }
-}
     document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(`${category}Btn`)?.classList.add('active');
 
@@ -226,16 +216,13 @@ if (buttonGroup && !buttonGroup.classList.contains('sticky-active')) {
             resultsDiv.innerHTML = "";
             selection.forEach(item => resultsDiv.appendChild(renderCard(item, category)));
             
-            // Only scroll AFTER user has actually started interacting (post-tutorial UX)
-        if (state.hasInitialScrollDone) {
-            const alertBox = document.getElementById("distance-alert");
-        
-            if (alertBox && !alertBox.classList.contains("hidden")) {
-                window.scrollTo({ top: alertBox.offsetTop - 100, behavior: 'smooth' });
-            } else {
-                window.scrollTo({ top: resultsDiv.offsetTop - 120, behavior: 'smooth' });
-            }
+            // mark interaction once
+        if (!state.hasUserInteracted) {
+            state.hasUserInteracted = true;
         }
+
+        // SINGLE scroll point (only place scroll happens)
+        scrollToResults();
         }
     } catch (err) {
         console.error("Action Error:", err);
@@ -355,12 +342,14 @@ window.addEventListener('DOMContentLoaded', () => {
     let hasStarted = false;
 
     function startApp() {
-        if (hasStarted) return;
-        hasStarted = true;
-        requestAnimationFrame(() => {
+    if (hasStarted) return;
+    hasStarted = true;
+
+    requestAnimationFrame(() => {
+        state.hasUserInteracted = true; // prevents auto-scroll jitter
         handleAction('food');
-});
-    }
+    });
+}
 
     if (overlay) {
         overlay.classList.remove('hidden');
