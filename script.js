@@ -119,6 +119,7 @@ function scrollToResults() {
 
 function handleUserClick(category) {
     state.hasUserInteracted = true;
+    document.querySelector('.button-group')?.classList.add('sticky-active');
     handleAction(category);
 }
 
