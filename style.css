@@ -48,13 +48,13 @@ body {
     width: 92%; 
     max-width: 800px; 
     margin: 0 auto; 
-    padding: 60px 0; 
+    padding: 40px 0 20px; 
 }
 
 /* --- Header & Logo --- */
 header { 
     text-align: center; 
-    margin-bottom: 20px; 
+    margin-bottom: 10px; 
 }
 
 .logo-wrapper { 
@@ -124,10 +124,9 @@ header {
     display: grid; 
     grid-template-columns: repeat(3, 1fr); 
     gap: 12px; 
-    margin-bottom: 25px; 
+    margin-bottom: 15px; 
     
     /* Stick to top */
-    position: -webkit-sticky;
     position: relative;
     top: 10px; 
     z-index: 1000;
