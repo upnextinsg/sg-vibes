@@ -117,6 +117,11 @@ function scrollToResults() {
     });
 }
 
+function handleUserClick(category) {
+    state.hasUserInteracted = true;
+    handleAction(category);
+}
+
 async function getLocation() {
     if (state.locationStatus === 'resolved') return state.userLoc || SG_CENTER;
     state.locationStatus = 'requesting';
@@ -222,7 +227,9 @@ async function handleAction(category) {
         }
 
         // SINGLE scroll point (only place scroll happens)
+        if (state.hasUserInteracted) {
         scrollToResults();
+}
         }
     } catch (err) {
         console.error("Action Error:", err);
@@ -346,7 +353,6 @@ window.addEventListener('DOMContentLoaded', () => {
     hasStarted = true;
 
     requestAnimationFrame(() => {
-        state.hasUserInteracted = true; // prevents auto-scroll jitter
         handleAction('food');
     });
 }
