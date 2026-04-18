@@ -54,7 +54,7 @@ body {
 /* --- Header & Logo --- */
 header { 
     text-align: center; 
-    margin-bottom: 40px; 
+    margin-bottom: 20px; 
 }
 
 .logo-wrapper { 
@@ -77,11 +77,11 @@ header {
 }
 
 .header-instructions {
-    margin: 8px auto;
+    margin: 6px auto;
     background: rgba(255, 255, 255, 0.05); /* Very subtle glass effect */
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 6px 16px;
+    padding: 6px 12px;
     width: fit-content;
     backdrop-filter: blur(8px);
 }
@@ -100,7 +100,7 @@ header {
 }
 
 .instruction-steps span {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.8);
     display: block;
