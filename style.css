@@ -108,10 +108,15 @@ header {
 }
 
 .header-disclaimer {
-    font-size: 0.6rem;
-    opacity: 0.5;
-    margin-bottom: 5px;
+    font-size: 0.7rem;
+    opacity: 0.75;
+    margin-bottom: 8px;
     text-align: center;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    display: inline-block;
 }
 
 /* --- Navigation --- */
@@ -174,10 +179,8 @@ header {
 
 /* --- Warning Alerts --- */
 .alert-warning {
-    position: -webkit-sticky;
-    position: sticky;
-    top: 95px; /* Aligned under your sticky buttons */
-    z-index: 2000;
+   position: relative;
+    margin: 10px auto;
     
     /* Matching your Glassmorphism theme */
     background: rgba(255, 255, 255, 0.08) !important; 
