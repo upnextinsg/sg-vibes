@@ -205,6 +205,13 @@ header {
     /* Clean state - No bobbling/animations */
     animation: none !important;
     transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.alert-warning:not(.hidden) {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 /* Make the specific 'Open in Browser' text pop without being 'ugly' */
