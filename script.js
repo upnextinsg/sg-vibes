@@ -138,7 +138,11 @@ async function getLocation() {
                 state.userLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                 state.locationStatus = 'resolved';
                 // Hide alert if location is now found
-                document.getElementById("distance-alert")?.classList.add("hidden");
+                const alertBox = document.getElementById("distance-alert");
+            if (alertBox) {
+                alertBox.classList.add("hidden");
+                alertBox.innerHTML = ""; // clean reset
+            }
                 resolve(state.userLoc);
             },
             (error) => fallbackLocation(resolve, error.message),
@@ -149,18 +153,23 @@ async function getLocation() {
 
 function fallbackLocation(resolve, reason) {
     const alertBox = document.getElementById("distance-alert");
-    if (alertBox) {
-        alertBox.classList.remove("hidden");
-        let message = `📍 Unable to get precise location. Showing results across Singapore.`;
-        if (isInstagramBrowser()) message += `<br>👉 Tap <b>•••/⋮</b> → <b>Open in Browser</b>`;
-        else {message += `👉 For better accuracy, turn on location and refresh.`;}
-        alertBox.innerHTML = message;
-        setTimeout(() => {
-        alertBox.classList.add("hidden");
-    }, 5000);
-    }
+
     state.userLoc = SG_CENTER;
     state.locationStatus = 'resolved';
+
+    if (alertBox) {
+        let message = `📍 Unable to get precise location.<br>Showing results across Singapore.`;
+
+        if (isInstagramBrowser()) {
+            message += `<br><br>👉 Tap <b>••• / ⋮</b> → <b>Open in Browser</b>`;
+        } else {
+            message += `<br><br>👉 Turn on location services and refresh the page.`;
+        }
+
+        alertBox.innerHTML = message;
+        alertBox.classList.remove("hidden");
+    }
+
     resolve(SG_CENTER);
 }
 
