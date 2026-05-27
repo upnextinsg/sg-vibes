@@ -338,10 +338,12 @@ function renderCard(item, category) {
         ${distHTML}
     </div>
     <div class="card-content">
-        <span class="category-tag">${escapeHTML(type || category)}</span>
-        <h3>${escapeHTML(name || "Local Spot")}</h3>
-        <p>${escapeHTML(desc || "Tap below for details")}</p>
-        <div class="card-footer" style="display:flex; gap:8px; margin-top:auto;"></div>
+        <div class="card-header-block">
+            <span class="category-tag">${escapeHTML(type || category)}</span>
+            <h3 class="card-title">${escapeHTML(name || "Local Spot")}</h3>
+        </div>
+        <p class="card-desc">${escapeHTML(desc || "Goodness waiting to be discovered.")}</p>
+        <div class="card-footer"></div>
     </div>`;
 
     const footer = card.querySelector('.card-footer');
@@ -362,14 +364,9 @@ function renderCard(item, category) {
     
     // Primary Action (Maps/Spotify)
     const mainBtn = document.createElement('button');
-    mainBtn.className = "btn-link";
-    mainBtn.style.flex = "2";
-    mainBtn.style.background = "var(--accent)";
-    mainBtn.style.color = "white";
-    mainBtn.style.padding = "12px";
-    mainBtn.style.borderRadius = "12px";
-    mainBtn.style.fontWeight = "700";
-    mainBtn.textContent = (activeCat === 'music') ? "🎵 Open Spotify" : "📍 Open Google Maps";
+    mainBtn.className = "btn-link btn-primary"; // Added btn-primary class
+    // Elevated Micro-Copy: Action-oriented instead of tool-oriented
+    mainBtn.innerHTML = (activeCat === 'music') ? "<span class='btn-icon'>🎵</span> Listen Now" : "<span class='btn-icon'>📍</span> Get Directions";
     
    mainBtn.onclick = () => {
     if (!targetUrl || targetUrl === "#") {
@@ -388,11 +385,7 @@ function renderCard(item, category) {
     
     const shareBtn = document.createElement('button');
     shareBtn.className = "btn-link btn-share-secondary";
-    shareBtn.style.flex = "1";
-    shareBtn.style.padding = "12px";
-    shareBtn.style.borderRadius = "12px";
-    shareBtn.style.fontWeight = "700";
-    shareBtn.innerHTML = "🔗 Share";
+    shareBtn.innerHTML = "🔗 Share"; // Shorter text to keep the visual weight on the primary button
     shareBtn.onclick = (e) => {
     e.stopPropagation();
 
