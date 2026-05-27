@@ -28,7 +28,7 @@ let state = {
     hasUserInteracted: false,
     hasInitialScrollDone: false,
     // NEW: Filter tracking
-    activeFilter: { food: 'All', store: 'All', music: 'All' }, 
+    activeFilters: { food: [], store: [], music: [] }, 
     availableFilters: { food: [], store: [], music: [] },
 };
 
@@ -258,7 +258,7 @@ async function handleAction(category) {
                 const lng = parseFloat(item.cols[3]);
                 item.dist = (category === 'music') ? 0 : calculateDistance(userCoords.lat, userCoords.lng, lat, lng);
             });
-
+            state.dataCache.sort((a, b) => (a.dist || 0) - (b.dist || 0));
             // --- NEW: Dynamically generate filters from column 1 ---
             if (category !== 'music') {
                 const uniqueFilters = new Set(['All']); // 'All' is always the default first option
@@ -430,27 +430,50 @@ function renderFilters(category) {
     container.classList.remove('hidden');
     container.innerHTML = ''; 
 
+    const activeList = state.activeFilters[category];
+
+    // 1. Create the "All / Clear" button
+    const allBtn = document.createElement('button');
+    allBtn.className = 'filter-pill';
+    if (activeList.length === 0) allBtn.classList.add('active');
+    allBtn.textContent = 'All';
+    allBtn.onclick = () => {
+        state.activeFilters[category] = []; // Reset filters
+        resetCarouselPosition(category);
+    };
+    container.appendChild(allBtn);
+
+    // 2. Create the dynamic category buttons
     state.availableFilters[category].forEach(filterText => {
+        if (filterText === 'All') return; // Skip if it snuck into the data
+
         const btn = document.createElement('button');
         btn.className = 'filter-pill';
-        if (state.activeFilter[category] === filterText) {
+        
+        if (activeList.includes(filterText)) {
             btn.classList.add('active');
         }
         
-        btn.textContent = filterText;
-        
         btn.onclick = () => {
-            state.activeFilter[category] = filterText;
-            state.carouselOffset[category] = 0; 
-            if (window.innerWidth <= 500) {
-                state.mobileScrollX[category] = 0;
+            // Toggle logic
+            if (activeList.includes(filterText)) {
+                state.activeFilters[category] = activeList.filter(f => f !== filterText);
+            } else {
+                state.activeFilters[category].push(filterText);
             }
-            renderFilters(category); 
-            renderCarousel(category);
+            resetCarouselPosition(category);
         };
         
         container.appendChild(btn);
     });
+}
+
+// Helper to keep UI snappy when clicking filters
+function resetCarouselPosition(category) {
+    state.carouselOffset[category] = 0; 
+    if (window.innerWidth <= 500) state.mobileScrollX[category] = 0;
+    renderFilters(category); 
+    renderCarousel(category);
 }
 
 function renderCarousel(category) {
@@ -462,11 +485,14 @@ function renderCarousel(category) {
 
     // FILTER LOGIC: Support multiple types separated by "/"
     let dataToRender = state.dataCache;
-    if (category !== 'music' && state.activeFilter[category] !== 'All') {
+    const active = state.activeFilters[category];
+    
+    if (category !== 'music' && active && active.length > 0) {
         dataToRender = state.dataCache.filter(item => {
             const rawType = (item.cols[1] || '').trim();
             const itemTypes = rawType.split('/').map(t => t.trim());
-            return itemTypes.includes(state.activeFilter[category]);
+            // If the item has ANY of the selected tags, show it
+            return active.some(activeFilter => itemTypes.includes(activeFilter));
         });
     }
 
