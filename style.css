@@ -846,3 +846,89 @@ footer p {
     }
 }
 }
+
+/* --- VISUAL HIERARCHY UPGRADES --- */
+
+/* 1. Anchor the Card with a Bold Title Block */
+.card-header-block {
+    margin-bottom: 12px;
+}
+
+.card-title {
+    margin: 4px 0 0 0 !important;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.5rem !important; /* Significantly larger */
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    color: var(--text-dark);
+}
+
+.card-desc {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 20px !important;
+}
+
+/* 2. Distinct Button Hierarchy */
+.card-footer {
+    margin-top: auto;
+    display: flex;
+    gap: 12px; /* Breathing room between buttons */
+    align-items: center; /* Align heights */
+}
+
+/* Base button cleanup */
+.btn-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Primary Action (High Contrast Eye Magnet) */
+.btn-primary {
+    flex: 2; /* Takes up 2/3 of the space */
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 8px 20px rgba(255, 71, 87, 0.3); /* Subtle glow */
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(255, 71, 87, 0.4);
+}
+
+/* Secondary Action (Low Visual Weight) */
+.btn-share-secondary {
+    flex: 1; /* Takes up 1/3 of the space */
+    background: rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    color: var(--text-muted) !important;
+    box-shadow: none;
+}
+
+.btn-share-secondary:hover {
+    background: rgba(0, 0, 0, 0.08) !important;
+    color: var(--text-dark) !important;
+}
+
+/* --- Mobile View Adjustments --- */
+@media (max-width: 500px) {
+    .card-title {
+        font-size: 1.2rem !important; /* Scale down but keep heavy weight */
+    }
+    
+    .btn-link {
+        padding: 12px 8px !important; /* Thumb-friendly height */
+        font-size: 0.85rem !important;
+    }
+}
