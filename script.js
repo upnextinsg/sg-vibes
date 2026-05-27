@@ -628,6 +628,40 @@ window.addEventListener('DOMContentLoaded', () => {
     } else {
         startApp();
     }
+    const filterContainer = document.getElementById('filter-container');
+    if (filterContainer) {
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        filterContainer.addEventListener('mousedown', (e) => {
+            isDown = true;
+            filterContainer.style.cursor = 'grabbing';
+            startX = e.pageX - filterContainer.offsetLeft;
+            scrollLeft = filterContainer.scrollLeft;
+        });
+
+        filterContainer.addEventListener('mouseleave', () => {
+            isDown = false;
+            filterContainer.style.cursor = 'grab';
+        });
+
+        filterContainer.addEventListener('mouseup', () => {
+            isDown = false;
+            filterContainer.style.cursor = 'grab';
+        });
+
+        filterContainer.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - filterContainer.offsetLeft;
+            const walk = (x - startX) * 1.5; // Adjust scroll speed multiplier here
+            filterContainer.scrollLeft = scrollLeft - walk;
+        });
+        
+        // Set initial grab cursor
+        filterContainer.style.cursor = 'grab';
+    }
 });
 
 // Keep moveCarousel at the very bottom, outside the DOMContentLoaded block
