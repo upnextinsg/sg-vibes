@@ -21,12 +21,15 @@ let state = {
     dataCache: [],
     pointers: { food: 0, store: 0, music: 0 },
     carouselOffset: { food: 0, store: 0, music: 0 },
-    mobileScrollX: { food: 0, store: 0, music: 0 }, // <-- ADD THIS LINE
+    mobileScrollX: { food: 0, store: 0, music: 0 },
     isLocating: false,
     locationStatus: 'idle',
     appPhase: 'BOOT',
     hasUserInteracted: false,
     hasInitialScrollDone: false,
+    // NEW: Filter tracking
+    activeFilter: { food: 'All', store: 'All', music: 'All' }, 
+    availableFilters: { food: [], store: [], music: [] },
 };
 
 const SG_CENTER = { lat: 1.3048, lng: 103.8318 };
@@ -256,12 +259,44 @@ async function handleAction(category) {
                 item.dist = (category === 'music') ? 0 : calculateDistance(userCoords.lat, userCoords.lng, lat, lng);
             });
 
-            if (category !== 'music') {
-                state.dataCache.sort((a, b) => a.dist - b.dist);
+            function renderFilters(category) {
+    const container = document.getElementById('filter-container');
+    if (!container) return;
+
+    if (category === 'music' || !state.availableFilters[category] || state.availableFilters[category].length === 0) {
+        container.classList.add('hidden');
+        return;
+    }
+
+    container.classList.remove('hidden');
+    container.innerHTML = ''; 
+
+    state.availableFilters[category].forEach(filterText => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-pill';
+        if (state.activeFilter[category] === filterText) {
+            btn.classList.add('active');
+        }
+        
+        btn.textContent = filterText;
+        
+        btn.onclick = () => {
+            state.activeFilter[category] = filterText;
+            state.carouselOffset[category] = 0; 
+            if (window.innerWidth <= 500) {
+                state.mobileScrollX[category] = 0;
             }
+            renderFilters(category); 
+            renderCarousel(category);
+        };
+        
+        container.appendChild(btn);
+    });
+}
         }
 
         // Reset the "window" to the start of the sorted list
+        renderFilters(category);
         renderCarousel(category);
 
         const resultsDiv = document.getElementById("results");
@@ -403,6 +438,41 @@ function renderCard(item, category) {
     return card;
 }
 
+function renderFilters(category) {
+    const container = document.getElementById('filter-container');
+    if (!container) return;
+
+    if (category === 'music' || !state.availableFilters[category] || state.availableFilters[category].length === 0) {
+        container.classList.add('hidden');
+        return;
+    }
+
+    container.classList.remove('hidden');
+    container.innerHTML = ''; 
+
+    state.availableFilters[category].forEach(filterText => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-pill';
+        if (state.activeFilter[category] === filterText) {
+            btn.classList.add('active');
+        }
+        
+        btn.textContent = filterText;
+        
+        btn.onclick = () => {
+            state.activeFilter[category] = filterText;
+            state.carouselOffset[category] = 0; 
+            if (window.innerWidth <= 500) {
+                state.mobileScrollX[category] = 0;
+            }
+            renderFilters(category); 
+            renderCarousel(category);
+        };
+        
+        container.appendChild(btn);
+    });
+}
+
 function renderCarousel(category) {
     const resultsDiv = document.getElementById("results");
     const prevBtn = document.getElementById("prevBtn");
@@ -410,9 +480,19 @@ function renderCarousel(category) {
     
     if (!resultsDiv) return;
 
-    // 1. Render ALL items into the DOM immediately so they exist side-by-side for mobile swiping
+    // FILTER LOGIC: Support multiple types separated by "/"
+    let dataToRender = state.dataCache;
+    if (category !== 'music' && state.activeFilter[category] !== 'All') {
+        dataToRender = state.dataCache.filter(item => {
+            const rawType = (item.cols[1] || '').trim();
+            const itemTypes = rawType.split('/').map(t => t.trim());
+            return itemTypes.includes(state.activeFilter[category]);
+        });
+    }
+
+    // 1. Render ONLY the filtered items
     resultsDiv.innerHTML = "";
-    state.dataCache.forEach(item => {
+    dataToRender.forEach(item => {
         const card = renderCard(item, category);
         resultsDiv.appendChild(card);
     });
@@ -549,7 +629,7 @@ function moveCarousel(category, direction) {
     if (!category || !state.dataCache || state.dataCache.length === 0) return;
     
     const resultsDiv = document.getElementById("results");
-    const max = state.dataCache.length;
+    const max = resultsDiv.querySelectorAll('.card').length;
     
     if (window.innerWidth <= 500) {
         // Mobile behavior: Use smooth programmatic scrolling to match the native swiper track
