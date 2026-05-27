@@ -259,47 +259,27 @@ async function handleAction(category) {
                 item.dist = (category === 'music') ? 0 : calculateDistance(userCoords.lat, userCoords.lng, lat, lng);
             });
 
-            function renderFilters(category) {
-    const container = document.getElementById('filter-container');
-    if (!container) return;
-
-    if (category === 'music' || !state.availableFilters[category] || state.availableFilters[category].length === 0) {
-        container.classList.add('hidden');
-        return;
-    }
-
-    container.classList.remove('hidden');
-    container.innerHTML = ''; 
-
-    state.availableFilters[category].forEach(filterText => {
-        const btn = document.createElement('button');
-        btn.className = 'filter-pill';
-        if (state.activeFilter[category] === filterText) {
-            btn.classList.add('active');
-        }
-        
-        btn.textContent = filterText;
-        
-        btn.onclick = () => {
-            state.activeFilter[category] = filterText;
-            state.carouselOffset[category] = 0; 
-            if (window.innerWidth <= 500) {
-                state.mobileScrollX[category] = 0;
+            // --- NEW: Dynamically generate filters from column 1 ---
+            if (category !== 'music') {
+                const uniqueFilters = new Set(['All']); // 'All' is always the default first option
+                
+                state.dataCache.forEach(item => {
+                    const rawType = (item.cols[1] || '').trim();
+                    if (rawType) {
+                        // Split by "/" so "Cafe / Halal" becomes two separate filters
+                        rawType.split('/').forEach(t => uniqueFilters.add(t.trim()));
+                    }
+                });
+                
+                // Save the unique list back to state
+                state.availableFilters[category] = Array.from(uniqueFilters);
             }
-            renderFilters(category); 
-            renderCarousel(category);
-        };
-        
-        container.appendChild(btn);
-    });
-}
         }
 
         // Reset the "window" to the start of the sorted list
         renderFilters(category);
         renderCarousel(category);
 
-        const resultsDiv = document.getElementById("results");
         if (resultsDiv) {
             if (window.innerWidth <= 500) {
                 // Restore mobile position
