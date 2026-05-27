@@ -449,7 +449,7 @@ function renderFilters(category) {
 
         const btn = document.createElement('button');
         btn.className = 'filter-pill';
-        
+        btn.textContent = filterText;
         if (activeList.includes(filterText)) {
             btn.classList.add('active');
         }
